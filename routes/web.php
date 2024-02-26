@@ -59,6 +59,7 @@ route::get('/loginB',[HomeController::class,'loginB']);
 route::get('/registerB',[HomeController::class,'registerB']);
 // routes/web.php
 Route::post('/login.custom', [HomeController::class,'customLogin'])->name('custom.login');
+Route::post('/logindefense.custom', [HomeController::class,'customLogin'])->name('customdefense.login');
 Route::post('/register-custom', [HomeController::class,'customRegister'])->name('custom.register');
 // xss
 route::get('/contact',[HomeController::class,'contact']);

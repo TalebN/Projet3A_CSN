@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\Cart;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Validation\Rules\Password;
 use Session;
 use Stripe;
 
@@ -38,7 +40,7 @@ if($usertype=='1'){
     return view('admin.home',compact('total_product','total_order','total_user','total_revenue','total_delivered','total_processing'));
    }
 else
-   { 
+   {
       $product=Product::paginate(10);
       return view('home.userpage',compact('product'));
    }
@@ -50,39 +52,85 @@ else
    public function index(){
       $product=Product::paginate(10);
       return view('home.userpage',compact('product'));
-      
+
    }
 
    ///////////////////
-   public function registerB(){
-      return view('home.registerBeginer');
-      
+
+   public function registerDef(){
+      return view('home.registerdefense');
+
    }
 
-   public function customRegister(Request $request)
-    {
-      $product=Product::paginate(10);
-     
-        $request->validate([
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string'
-        ]);
+   public function registerB(){
+      return view('home.registerBeginer');
 
-        // Création de l'utilisateur sans chiffrement du mot de passe
+   }
+
+   public function advRegister(Request $request)
+{
+    $product = Product::paginate(10);
+
+    $validator = $request->validate([
+        'email' => 'required|email|unique:users,email',
+        'password' => [
+            'required',
+            'string',
+            Password::min(8) // Au moins 8 caractères
+                ->mixedCase() // Au moins une lettre majuscule et une lettre minuscule
+                ->letters() // Au moins une lettre
+                ->numbers() // Au moins un chiffre
+                ->uncompromised(), // Vérifier que le mot de passe n'est pas compromis (facultatif)
+        ],
+    ], [
+        'email.required' => 'Le champ email est requis.',
+        'email.email' => 'Veuillez entrer une adresse email valide.',
+        'email.unique' => 'Cette adresse email est déjà utilisée.',
+        'password.required' => 'Le champ mot de passe est requis.',
+        'password.string' => 'Le mot de passe doit être une chaîne de caractères.',
+        'password.min' => 'Le mot de passe doit avoir au moins 8 caractères et contenir au moins une lettre majuscule, une lettre minuscule et un chiffre.',
+    ]);
+
+    if ($validator) {
+        // Création de l'utilisateur avec hachage du mot de passe
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => $request->password, // Stockage du mot de passe en clair (non recommandé)
+            'password' => Hash::make($request->password), // Hashage du mot de passe
         ]);
-        return view('home.userpage',compact('product'));
+
+        // Retourner la vue 'home.userpage' avec les données de produit
+        return view('home.userpage', compact('product'));
+    } else {
+        return redirect()->back()->withErrors(['password' => 'Attention: le mot de passe ne répond pas aux exigences.']);
     }
+}
+
+public function customRegister(Request $request)
+   {
+   $product=Product::paginate(10);
+
+      $request->validate([
+         'email' => 'required|email|unique:users,email',
+         'password' => 'required|string'
+      ]);
+
+      // Création de l'utilisateur sans chiffrement du mot de passe
+      $user = User::create([
+         'name' => $request->name,
+         'email' => $request->email,
+         'password' => $request->password, // Stockage du mot de passe en clair (non recommandé)
+      ]);
+      return view('home.userpage',compact('product'));
+   }
 
 
    public function loginB(){
-      return view('home.loginBeginer');
-      
+      return view('home.logindefense');
+
    }
-   public function customLogind(Request $request)
+
+   public function customLogin(Request $request)
    {
        // Validation des données entrantes
        $request->validate([
@@ -90,61 +138,40 @@ else
            'password' => 'required',
        ]);
 
-       // Vérification des identifiants sans hasher le mot de passe
-       $user = User::where('email', $request->email)
-                   ->where('password', $request->password) // À NE PAS FAIRE dans une application réelle
-                   ->first();
+       // Récupération de l'utilisateur par email
+       $user = User::where('email', $request->email)->first();
+
 
        if ($user) {
-           // Si les identifiants correspondent, enregistrer les infos utilisateur en session
-           Session::put('user', $user->toArray());
-           $product=Product::paginate(10);
-           // Rediriger vers une page (par ex. tableau de bord)
-           return view('home.userpage',compact('product'));
+           // Vérification du mot de passe à l'aide de la méthode check
+           if (Hash::check($request->password, $user->password)) {
+               // Authentification réussie
+               Auth::login($user);
+               $product = Product::paginate(10);
+
+               return view('home.userpage', compact('product'));
+           } else {
+               // Journalisation des tentatives de connexion infructueuses
+               Log::warning('Tentative de connexion infructueuse pour l\'utilisateur avec l\'email : ' . $request->email);
+           }
        } else {
-           // Si les identifiants ne correspondent pas, retourner avec une erreur
-           return back()->withErrors([
-               'email' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.',
-           ]);
+           // Journalisation des tentatives de connexion avec un email non enregistré
+           Log::warning('Tentative de connexion avec un email non enregistré : ' . $request->email);
        }
+
+       // Les identifiants ne correspondent pas, retour avec une erreur
+       return back()->withErrors([
+           'message' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.',
+       ]);
    }
 
-   public function customLogin(Request $request)
-{
-    // Validation des données entrantes
-    $request->validate([
-        'email' => 'required|email'
-    ]);
-
-    // Récupération de l'utilisateur par email
-    $user = User::where('email', $request->email)->first();
-
-    $email = $request->input('email');
-    $password = $request->input('password');
-
-    // Construction et exécution d'une requête SQL non sécurisée
-    $sql = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
-    $user1 = DB::select(DB::raw($sql));
-    if ($user1) {
-        $product=Product::paginate(10);
-      //   dd($user,$user->password,$request->password);
-        Auth::login($user);
-      // /  dd($user);
-        return view('home.userpage',compact('product'));
-    } else {
-        // Les identifiants ne correspondent pas, retour avec une erreur
-        return back()->withErrors([
-            'message' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.',
-        ]);
-    }
-   }
    //////////////
 
    public function product_details($id)
    {
       $product=product::find($id);
       return view('home.product_details',compact('product'));
-      
+
    }
 
    public function add_cart(Request $request,$id)
@@ -173,7 +200,7 @@ else
          $cart->quantity=$request->quantity;
          $cart->save();
          return redirect()->back();
-     
+
       }
       else
       {
@@ -190,19 +217,19 @@ else
          $cart=cart::where('user_id','=',$id)->get();
          return view('home.showcart',compact('cart'));
       }
-      
+
       else
       {
          return redirect('login');
       }
-      
+
    }
    public function remove_cart($id)
    {
       $cart=cart::find($id);
       $cart->delete();
       return redirect()->back();
-      
+
    }
 
    public function cash_order()
@@ -239,27 +266,27 @@ else
    {
       return view('home.stripe',compact('totalprice'));
    }
-   
+
    public function stripePost(Request $request,$totalprice)
     {
         Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
-    
+
         Stripe\Charge::create ([
                 "amount" => $totalprice * 100,
                 "currency" => "usd",
                 "source" => $request->stripeToken,
-                "description" => "Thanks for payment." 
+                "description" => "Thanks for payment."
         ]);
-      
+
         Session::flash('success', 'Payment successful!');
-              
+
         return back();
     }
 
 
     public function product_search(Request $request)
     {
-      
+
       $search_text=$request->search;
       $product=product::where('title','LIKE',"%$search_text%")->orWhere('category','LIKE',"%$search_text%")->paginate(10);
       return view('home.userpage',compact('product'));
@@ -270,7 +297,7 @@ else
     public function contact()
     {
        return view('home.testXss');
-       
+
     }
 
     public function soumettreFormulaire(Request $request)

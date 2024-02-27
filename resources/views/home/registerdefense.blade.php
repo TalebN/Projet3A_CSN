@@ -89,7 +89,7 @@
                 </ul>
             </div>
         @endif
-        <form method="POST" action="{{ route('custom.register') }}">
+        <form method="POST" action="{{ route('custom.registerSec') }}">
             @csrf
             <div class="form-group">
                 <label for="name">Name:</label>

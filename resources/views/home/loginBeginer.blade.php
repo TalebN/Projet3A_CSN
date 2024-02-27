@@ -5,7 +5,7 @@ beginers
                 {{ session('status') }}
             </div>
         @endif
-<form method="POST" action="{{ route('custom.logind') }}">
+<form method="POST" action="{{ route('customloginNotSec') }}">
     @csrf
     <div>
         <label for="email">Email:</label>

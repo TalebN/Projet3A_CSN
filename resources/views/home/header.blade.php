@@ -1,7 +1,9 @@
  <header class="header_section">
+      <a class="btn btn-info" style="position:absolute; top:25px;left:15px;" href="{{ url('/') }}">Change mode</a>
+
             <div class="container">
                <nav class="navbar navbar-expand-lg custom_nav-container ">
-                  <a class="navbar-brand" href="{{url('/')}}"><img width="250" src="images/logo.png" alt="#" /></a>
+                  <a class="navbar-brand" href="#"><img width="250" src="images/logo.png" alt="#" /></a>
                   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                   <span class=""> </span>
                   </button>
@@ -38,13 +40,22 @@
                            <a class="btn  btn-primary" id="logincss" href="{{ route('login') }}">login</a>
                         </li> -->
                         <li class="nav-item">
-                           <a class="btn  btn-primary" id="logincss" href="{{ url('loginB') }}">login</a>
+                        @if(isset($mode) && $mode == 'secure')
+                           <a class="btn btn-primary" id="logincss" href="{{ route('loginSec') }}">Login</a>
+                        @elseif(isset($mode) && $mode == 'insecure')
+                           <a class="btn btn-primary" id="logincss" href="{{ route('loginNotSec') }}">Login</a>
+                        @endif
+
                         </li>
                         <!-- <li class="nav-item">
                            <a class="btn btn-success" href="{{ route('register') }}">Register</a>
                         </li> -->
                         <li class="nav-item">
-                           <a class="btn btn-success" href="{{ url('registerB') }}">Register</a>
+                        @if(isset($mode) && $mode == 'secure')
+                           <a class="btn btn-success" href="{{ url('registerSec') }}">Register</a>
+                        @elseif(isset($mode) && $mode == 'insecure')
+                           <a class="btn btn-success" href="{{ url('registerNotSec') }}">Register</a>
+                        @endif
                         </li>
                         @endauth
                         @endif

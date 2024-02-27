@@ -14,9 +14,6 @@ use App\Http\Controllers\AdminController;
 |
 */
 
-route::get('/',[HomeController::class,'index']);
-
-
 
 Route::middleware([
     'auth:sanctum',
@@ -54,13 +51,23 @@ Route::post('stripe/{totalprice}',[HomeController::class, 'stripePost'])->name('
 route::get('/product',[HomeController::class,'product']);
 route::get('/product_search',[HomeController::class,'product_search']);
 
-////
-route::get('/loginB',[HomeController::class,'loginB']);
-route::get('/registerB',[HomeController::class,'registerB']);
-// routes/web.php
-Route::post('/login.custom', [HomeController::class,'customLogin'])->name('custom.login');
+////login and register
+Route::get('/loginSec', [HomeController::class, 'loginSec'])->name('loginSec');
+Route::get('/loginNotSec', [HomeController::class, 'loginNotSec'])->name('loginNotSec');
+
+route::get('/registerNotSec',[HomeController::class,'registerNotSec']);
+route::get('/registerSec',[HomeController::class,'registerSec']);
+// 
+Route::post('/customloginNotSec', [HomeController::class,'customloginNotSec'])->name('customloginNotSec');
 Route::post('/logindefense.custom', [HomeController::class,'customLogin'])->name('customdefense.login');
-Route::post('/register-custom', [HomeController::class,'customRegister'])->name('custom.register');
+Route::post('/registerNotSec-custom', [HomeController::class,'customRegisterNotSec'])->name('custom.register');
+Route::post('/registerSec-custom', [HomeController::class,'customRegisterSec'])->name('custom.registerSec');
 // xss
 route::get('/contact',[HomeController::class,'contact']);
 Route::post('/soumettre-formulaire', [HomeController::class,'soumettreFormulaire']);
+
+//chois du mode d'utilisation securisé vs non securisé
+route::get('/',[HomeController::class,'choix']);
+route::get('/secureMode',[HomeController::class,'index']);
+route::get('/vulnerableMode',[HomeController::class,'index']);
+

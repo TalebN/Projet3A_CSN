@@ -12,6 +12,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\URL;
 use Session;
 use Stripe;
 
@@ -50,27 +51,40 @@ else
 
 
    public function index(){
+      $product = Product::paginate(10);
+      $url = request()->fullUrl(); 
+      $mode = null;
+  
+      if (strpos($url, 'secureMode') !== false) {
+          $mode = 'secure';}
+      else if(strpos($url, 'vulnerableMode') !== false){
+         $mode = 'insecure';
+      }
+    
+      return view('home.userpage', compact('product', 'mode'));
+  }
+   ///////////////////  choix du mode d'utilisation : mode securisé vs non securisé
+   public function choix(){
       $product=Product::paginate(10);
-      return view('home.userpage',compact('product'));
+      return view('home.choix');
 
    }
-
    ///////////////////
 
-   public function registerDef(){
+   public function registerSec(){
       return view('home.registerdefense');
 
    }
 
-   public function registerB(){
+   public function registerNotSec(){
       return view('home.registerBeginer');
 
    }
 
-   public function advRegister(Request $request)
+   public function customRegisterSec(Request $request)
 {
     $product = Product::paginate(10);
-
+    $mode = 'secure';
     $validator = $request->validate([
         'email' => 'required|email|unique:users,email',
         'password' => [
@@ -100,15 +114,16 @@ else
         ]);
 
         // Retourner la vue 'home.userpage' avec les données de produit
-        return view('home.userpage', compact('product'));
+        return view('home.userpage', compact('product','mode'));
     } else {
         return redirect()->back()->withErrors(['password' => 'Attention: le mot de passe ne répond pas aux exigences.']);
     }
 }
 
-public function customRegister(Request $request)
+public function customRegisterNotSec(Request $request)
    {
    $product=Product::paginate(10);
+   $mode = 'insecure';
 
       $request->validate([
          'email' => 'required|email|unique:users,email',
@@ -121,13 +136,50 @@ public function customRegister(Request $request)
          'email' => $request->email,
          'password' => $request->password, // Stockage du mot de passe en clair (non recommandé)
       ]);
-      return view('home.userpage',compact('product'));
+      return view('home.userpage',compact('product', 'mode'));
    }
 
 
-   public function loginB(){
+   public function loginSec(){
       return view('home.logindefense');
 
+   }
+
+   public function loginNotSec(){
+      return view('home.loginBeginer');
+
+   }
+
+   public function customloginNotSec(Request $request)
+   {
+     // Validation des données entrantes
+    $request->validate([
+        'email' => 'required|email'
+    ]);
+
+    // Récupération de l'utilisateur par email
+    $user = User::where('email', $request->email)->first();
+
+    $email = $request->input('email');
+    $password = $request->input('password');
+
+    // Construction et exécution d'une requête SQL non sécurisée
+    $sql = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
+    $user1 = DB::select(DB::raw($sql));
+    if ($user1) {
+        $product=Product::paginate(10);
+      //   dd($user,$user->password,$request->password);
+        Auth::login($user);
+      // /  dd($user);
+        return view('home.userpage',compact('product'));
+    } else {
+        // Les identifiants ne correspondent pas, retour avec une erreur
+        return back()->withErrors([
+            'message' => 'Les identifiants fournis ne correspondent pas à nos enregistrements.',
+        ]);
+    }
+
+       
    }
 
    public function customLogin(Request $request)

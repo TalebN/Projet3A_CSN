@@ -168,10 +168,29 @@ public function customRegisterNotSec(Request $request)
     $user1 = DB::select(DB::raw($sql));
     if ($user1) {
         $product=Product::paginate(10);
-      //   dd($user,$user->password,$request->password);
         Auth::login($user);
-      // /  dd($user);
-        return view('home.userpage',compact('product'));
+        if ($user->usertype =='1'){
+            $total_product=product::all()->count();
+            $total_order=order::all()->count();
+            $total_user=user::all()->count();
+            $order=order::all();
+            $total_revenue=0;
+
+            foreach($order as $order)
+            {
+               $total_revenue=$total_revenue + $order->price;
+
+            }
+            $total_delivered=order::where('delivery_status','=','delivered')->get()->count();
+            $total_processing=order::where('delivery_status','=','processing')->get()->count();
+
+
+            return view('admin.home',compact('total_product','total_order','total_user','total_revenue','total_delivered','total_processing'));
+         }
+      elseif ($user->usertype =='0'){
+         $product=Product::paginate(10);
+         return view('home.userpage',compact('product'));
+        }
     } else {
         // Les identifiants ne correspondent pas, retour avec une erreur
         return back()->withErrors([
@@ -199,9 +218,29 @@ public function customRegisterNotSec(Request $request)
            if (Hash::check($request->password, $user->password)) {
                // Authentification réussie
                Auth::login($user);
-               $product = Product::paginate(10);
+               if($user->usertype =='1'){
+                  $total_product=product::all()->count();
+                  $total_order=order::all()->count();
+                  $total_user=user::all()->count();
+                  $order=order::all();
+                  $total_revenue=0;
 
-               return view('home.userpage', compact('product'));
+                  foreach($order as $order)
+                  {
+                     $total_revenue=$total_revenue + $order->price;
+
+                  }
+                  $total_delivered=order::where('delivery_status','=','delivered')->get()->count();
+                  $total_processing=order::where('delivery_status','=','processing')->get()->count();
+
+
+                  return view('admin.home',compact('total_product','total_order','total_user','total_revenue','total_delivered','total_processing'));
+               }
+            elseif ($user->usertype =='0'){
+               $product=Product::paginate(10);
+               return view('home.userpage',compact('product'));
+            }
+
            } else {
                // Journalisation des tentatives de connexion infructueuses
                Log::warning('Tentative de connexion infructueuse pour l\'utilisateur avec l\'email : ' . $request->email);

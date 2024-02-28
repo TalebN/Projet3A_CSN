@@ -65,6 +65,7 @@ Route::post('/registerSec-custom', [HomeController::class,'customRegisterSec'])-
 // xss
 route::get('/contact',[HomeController::class,'contact']);
 Route::post('/soumettre-formulaire', [HomeController::class,'soumettreFormulaire']);
+Route::post('/soumettre-formulaireNotSec', [HomeController::class,'soumettreFormulaireNotSec']);
 
 //chois du mode d'utilisation securisé vs non securisé
 route::get('/',[HomeController::class,'choix']);

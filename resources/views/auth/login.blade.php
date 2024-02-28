@@ -7,11 +7,18 @@
                   <a class="navbar-brand" href="{{url('/')}}"><img width="250" src="images/logo.png" alt="#" /></a>
         <x-jet-validation-errors class="mb-4" />
 
-        <!-- @if (session('status'))
+        @if (session('status'))
             <div class="mb-4 font-medium text-sm text-green-600">
                 {{ session('status') }}
             </div>
-        @endif -->
+        @endif
+<br>
+        @if (session('error'))
+            <div class="mb-4 font-medium text-sm text-red-600">
+                {{ session('error') }}
+            </div>
+        @endif
+
 
         <form method="POST" action="{{ route('login') }}">
             @csrf
@@ -23,7 +30,7 @@
 
             <div class="mt-4">
                 <x-jet-label for="password" value="{{ __('Password') }}" />
-                <x-jet-input id="password"  type="text" name="password" required  />
+                <x-jet-input id="password"  type="password" name="password" required  />
             </div>
 <!-- 
             <div class="block mt-4">

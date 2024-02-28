@@ -1,12 +1,20 @@
 <!DOCTYPE html>
-<html>
-   <head>
-      <!-- Basic -->
-      <meta charset="utf-8" />
-      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-      <!-- Mobile Metas -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+      <!-- @if(isset($mode) && $mode == 'secure')
+     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://trusted.cdn.com; object-src 'none';"> 
+     @elseif(isset($mode) && $mode == 'insecure')
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    @endif -->
       <!-- Site Metas -->
+      <!-- Site Metas -->
+      <meta name="keywords" content="" />
+      <meta name="description" content="" />
+      <meta name="author" content="" />
+      <link rel="shortcut icon" href="images/favicon.png" type="">
+  <!-- Site Metas -->
       <meta name="keywords" content="" />
       <meta name="description" content="" />
       <meta name="author" content="" />
@@ -50,28 +58,22 @@
     </style>
    </head>
    <body>
-      <div class="hero_area">
-         <!-- header section strats -->
+      <div class="">
          @include('home.header')
-         <!-- end header section -->
-         <!-- slider section -->
-        
-         <!-- end slider section -->
-      </div>
-      <!-- why section -->
-      @if(session()->has('message'))
-      <div class="alert alert-success">
-          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">x</button>
-          {{session()->get('message')}}
-      
 
-      </div>
-
-
-      @endif
+       
+          @if(isset($message))
+          <div class="alert alert-success">
+          Thank you for your message, we will get back to you shortly
+          </div>
+          @endif
 
       <div class="center">
-      <p>Message: {!! $message !!}</p>
+      @if(isset($mode) && $mode == 'secure')
+          <p>Message: {{ $message }}</p>
+      @elseif(isset($mode) && $mode == 'insecure')
+          <p>Message: {!! $message !!}</p>
+      @endif
       <!-- jQery -->
       <script src="home/js/jquery-3.4.1.min.js"></script>
       <!-- popper js -->

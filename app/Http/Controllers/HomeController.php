@@ -13,6 +13,8 @@ use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\URL;
+use App\Models\Message;
+use Purifier;
 use Session;
 use Stripe;
 
@@ -152,18 +154,11 @@ public function customRegisterNotSec(Request $request)
 
    public function customloginNotSec(Request $request)
    {
-     // Validation des données entrantes
-    $request->validate([
-        'email' => 'required|email'
-    ]);
-
-    // Récupération de l'utilisateur par email
     $user = User::where('email', $request->email)->first();
 
     $email = $request->input('email');
     $password = $request->input('password');
 
-    // Construction et exécution d'une requête SQL non sécurisée
     $sql = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
     $user1 = DB::select(DB::raw($sql));
     if ($user1) {
@@ -203,20 +198,16 @@ public function customRegisterNotSec(Request $request)
 
    public function customLogin(Request $request)
    {
-       // Validation des données entrantes
        $request->validate([
            'email' => 'required|email',
            'password' => 'required',
        ]);
 
-       // Récupération de l'utilisateur par email
        $user = User::where('email', $request->email)->first();
 
 
        if ($user) {
-           // Vérification du mot de passe à l'aide de la méthode check
            if (Hash::check($request->password, $user->password)) {
-               // Authentification réussie
                Auth::login($user);
                if($user->usertype =='1'){
                   $total_product=product::all()->count();
@@ -385,17 +376,35 @@ public function customRegisterNotSec(Request $request)
     }
 
     // XSS
-    public function contact()
-    {
-       return view('home.testXss');
-
+    public function contact(Request $request)
+    { 
+       $mode = $request->query('mode');
+       return view('home.testXss', compact('mode'));
     }
 
     public function soumettreFormulaire(Request $request)
+{  
+   $mode='secure';
+   if (!Auth::check()) {
+      return redirect('login')->with('error', 'You must be logged in to submit a message.');
+  }
+     
+      $validated = $request->validate([
+            'message' => 'required|string',
+      ]);
+      $message = Purifier::clean($validated['message']);
+      $newMessage = new Message;
+      $newMessage->user_id = Auth::id();
+      $newMessage->content = $message;
+      $newMessage->save();
+    return view('home.resultXss', compact('message','mode'));
+}
+
+public function soumettreFormulaireNotSec(Request $request)
 {
     $message = $request->input('message');
-    // Ici, vous pouvez faire quelque chose avec le message, comme le sauvegarder ou le valider.
-    return view('home.resultXss', compact('message'));
+    $mode='insecure';
+    return view('home.resultXss', compact('message','mode'));
 }
 
 

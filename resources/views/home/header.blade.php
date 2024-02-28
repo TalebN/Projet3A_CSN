@@ -1,3 +1,10 @@
+@php
+    $previousUrl = url()->previous();
+    if (strpos($previousUrl, 'login') !== false) {
+        $mode = 'secure';
+    }
+@endphp
+ 
  <header class="header_section">
       <a class="btn btn-info" style="position:absolute; top:25px;left:15px;" href="{{ url('/') }}">Change mode</a>
 
@@ -20,7 +27,9 @@
                            <a class="nav-link" href="blog_list.html">Blog</a>
                         </li>
                         <li class="nav-item">
-                           <a class="nav-link" href="{{url('contact')}}">Contact</a>
+                       
+                        <a class="nav-link" href="{{ url('contact') }}?mode={{ $mode == 'secure' ? '1' : '0' }}">Contact</a>
+
                         </li>
                         <li class="nav-item">
                            <a class="nav-link" href="{{url('show_cart')}}">Cart</a>
